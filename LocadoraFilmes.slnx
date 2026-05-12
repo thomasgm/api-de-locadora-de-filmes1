@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="LocadoraFilmes.Tests/LocadoraFilmes.Tests.csproj" />
+  <Project Path="LocadoraFilmes/LocadoraFilmes.csproj" />
+</Solution>
