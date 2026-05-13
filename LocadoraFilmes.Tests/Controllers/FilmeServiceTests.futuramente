@@ -1,0 +1,282 @@
+using LocadoraFilmes.Data;
+using LocadoraFilmes.DTOs;
+using LocadoraFilmes.Models;
+using LocadoraFilmes.Services;
+using Microsoft.EntityFrameworkCore;
+using Xunit;
+
+namespace LocadoraFilmes.Tests.Services;
+
+public class FilmeServiceTests
+{
+    private AppDbContext GetDbContext()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        var context = new AppDbContext(options);
+
+        context.Database.EnsureCreated();
+
+        return context;
+    }
+
+    private Filme CriarFilmeFake(int id = 1)
+    {
+        return new Filme
+        {
+            Id = id,
+            Titulo = "Interestelar",
+            Diretor = "Christopher Nolan",
+            Sinopse = "Exploração espacial",
+            Ano = 2014,
+            QuantidadeDisponivel = 10,
+            Generos = new List<Genero>
+            {
+                new Genero
+                {
+                    Nome = "Ficção Científica"
+                }
+            }
+        };
+    }
+
+    [Fact]
+    public async Task GetAllAsync_DeveRetornarFilmes()
+    {
+        // Arrange
+        var context = GetDbContext();
+
+        context.Filmes.Add(CriarFilmeFake());
+
+        await context.SaveChangesAsync();
+
+        var service = new FilmeService(context);
+
+        // Act
+        var result = await service.GetAllAsync(1, 10);
+
+        // Assert
+        Assert.Single(result);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_DeveRetornarFilme_QuandoExistir()
+    {
+        // Arrange
+        var context = GetDbContext();
+
+        var filme = CriarFilmeFake();
+
+        context.Filmes.Add(filme);
+
+        await context.SaveChangesAsync();
+
+        var service = new FilmeService(context);
+
+        // Act
+        var result = await service.GetByIdAsync(filme.Id);
+
+        // Assert
+        Assert.NotNull(result);
+
+        Assert.Equal("Interestelar", result.Titulo);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_DeveRetornarNull_QuandoNaoExistir()
+    {
+        // Arrange
+        var context = GetDbContext();
+
+        var service = new FilmeService(context);
+
+        // Act
+        var result = await service.GetByIdAsync(999);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CreateAsync_DeveCriarFilme()
+    {
+        // Arrange
+        var context = GetDbContext();
+
+        var service = new FilmeService(context);
+
+        var dto = new FilmeCreateDto
+        {
+            Titulo = "Matrix",
+            Diretor = "Wachowski",
+            Sinopse = "Neo descobre a verdade",
+            Ano = 1999,
+            QuantidadeDisponivel = 5
+        };
+
+        // Act
+        var result = await service.CreateAsync(dto);
+
+        // Assert
+        Assert.NotNull(result);
+
+        Assert.Equal("Matrix", result.Titulo);
+
+        Assert.Equal(1, context.Filmes.Count());
+    }
+
+    [Fact]
+    public async Task UpdateAsync_DeveAtualizarFilme()
+    {
+        // Arrange
+        var context = GetDbContext();
+
+        var filme = CriarFilmeFake();
+
+        context.Filmes.Add(filme);
+
+        await context.SaveChangesAsync();
+
+        var service = new FilmeService(context);
+
+        var dto = new FilmeUpdateDto
+        {
+            Titulo = "Batman Begins",
+            Diretor = "Christopher Nolan",
+            Sinopse = "Origem do Batman",
+            Ano = 2005,
+            QuantidadeDisponivel = 20
+        };
+
+        // Act
+        var result = await service.UpdateAsync(filme.Id, dto);
+
+        // Assert
+        Assert.NotNull(result);
+
+        Assert.Equal("Batman Begins", result.Titulo);
+
+        var filmeAtualizado = await context.Filmes.FindAsync(filme.Id);
+
+        Assert.Equal("Batman Begins", filmeAtualizado?.Titulo);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_DeveRetornarNull_QuandoFilmeNaoExistir()
+    {
+        // Arrange
+        var context = GetDbContext();
+
+        var service = new FilmeService(context);
+
+        var dto = new FilmeUpdateDto
+        {
+            Titulo = "Filme Inexistente",
+            Diretor = "Diretor",
+            Sinopse = "Teste",
+            Ano = 2020,
+            QuantidadeDisponivel = 1
+        };
+
+        // Act
+        var result = await service.UpdateAsync(999, dto);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_DeveRemoverFilme()
+    {
+        // Arrange
+        var context = GetDbContext();
+
+        var filme = CriarFilmeFake();
+
+        context.Filmes.Add(filme);
+
+        await context.SaveChangesAsync();
+
+        var service = new FilmeService(context);
+
+        // Act
+        var result = await service.DeleteAsync(filme.Id);
+
+        // Assert
+        Assert.True(result);
+
+        Assert.Empty(context.Filmes);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_DeveRetornarFalse_QuandoFilmeNaoExistir()
+    {
+        // Arrange
+        var context = GetDbContext();
+
+        var service = new FilmeService(context);
+
+        // Act
+        var result = await service.DeleteAsync(999);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_DeveRespeitarPaginacao()
+    {
+        // Arrange
+        var context = GetDbContext();
+
+        for (int i = 1; i <= 20; i++)
+        {
+            context.Filmes.Add(new Filme
+            {
+                Titulo = $"Filme {i}",
+                Diretor = "Diretor",
+                Ano = 2000 + i,
+                QuantidadeDisponivel = i
+            });
+        }
+
+        await context.SaveChangesAsync();
+
+        var service = new FilmeService(context);
+
+        // Act
+        var result = await service.GetAllAsync(2, 5);
+
+        // Assert
+        Assert.Equal(5, result.Count());
+    }
+
+    [Fact]
+    public async Task CreateAsync_DeveSalvarFilmeNoBanco()
+    {
+        // Arrange
+        var context = GetDbContext();
+
+        var service = new FilmeService(context);
+
+        var dto = new FilmeCreateDto
+        {
+            Titulo = "Avatar",
+            Diretor = "James Cameron",
+            Sinopse = "Pandora",
+            Ano = 2009,
+            QuantidadeDisponivel = 7
+        };
+
+        // Act
+        await service.CreateAsync(dto);
+
+        // Assert
+        var filmeBanco = await context.Filmes
+            .FirstOrDefaultAsync(f => f.Titulo == "Avatar");
+
+        Assert.NotNull(filmeBanco);
+    }
+}
