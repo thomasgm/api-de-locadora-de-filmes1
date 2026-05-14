@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.EntityFrameworkCore;
 
 namespace LocadoraFilmes.DTOs;
 
@@ -18,11 +17,10 @@ public class FilmeUpdateDto
     [Required(ErrorMessage = "O ano é obrigatório.")]
     [Range(1888, 2100, ErrorMessage = "O ano deve ser entre 1888 e 2100.")]
     public int Ano { get; set; }
+
     [Required(ErrorMessage = "Pelo menos um gênero é obrigatório.")]
     public List<string> Generos { get; set; } = new();
-    
-    [Required(ErrorMessage = "A quantidade disponível é obrigatória.")]
+
     [Range(0, int.MaxValue, ErrorMessage = "A quantidade disponível deve ser um número inteiro não negativo.")]
     public int QuantidadeDisponivel { get; set; }
-
 }
