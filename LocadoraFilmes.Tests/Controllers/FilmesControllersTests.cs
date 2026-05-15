@@ -16,15 +16,25 @@ public class FilmesControllerTests
         var filmes = new List<FilmeResponseDto>
         {
             new FilmeResponseDto
-            {
-                Id = 1,
-                Titulo = "Matrix"
-            },
+            (
+                1,
+                "Matrix",
+                "Wachowski",
+                1999,
+                new List<GeneroDTO>(),
+                5,
+                DateTime.UtcNow
+            ),
             new FilmeResponseDto
-            {
-                Id = 2,
-                Titulo = "Interestelar"
-            }
+            (
+                2,
+                "Interestelar",
+                "Christopher Nolan",
+                2014,
+                new List<GeneroDTO>(),
+                5,
+                DateTime.UtcNow
+            )
         };
 
         var mockService = new Mock<IFilmeService>();
@@ -36,7 +46,7 @@ public class FilmesControllerTests
         var controller = new FilmesController(mockService.Object);
 
         // Act
-        var result = await controller.GetAll();
+        var result = await controller.GetAll(null, null, 1, 10);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -51,10 +61,15 @@ public class FilmesControllerTests
     {
         // Arrange
         var filme = new FilmeResponseDto
-        {
-            Id = 1,
-            Titulo = "Matrix"
-        };
+        (
+            1,
+            "Matrix",
+            "Wachowski",
+            1999,
+            new List<GeneroDTO>(),
+            5,
+            DateTime.UtcNow
+        );
 
         var mockService = new Mock<IFilmeService>();
 
@@ -91,7 +106,7 @@ public class FilmesControllerTests
         var result = await controller.GetById(1);
 
         // Assert
-        Assert.IsType<NotFoundResult>(result);
+        Assert.IsType<NotFoundObjectResult>(result);
     }
 
     [Fact]
@@ -106,14 +121,15 @@ public class FilmesControllerTests
             QuantidadeDisponivel = 5
         };
 
-        var filmeCriado = new FilmeResponseDto
-        {
-            Id = 1,
-            Titulo = dto.Titulo,
-            Diretor = dto.Diretor,
-            Ano = dto.Ano,
-            QuantidadeDisponivel = dto.QuantidadeDisponivel
-        };
+        var filmeCriado = new FilmeResponseDto(
+            1,                          // Id
+            "Batman Begins",                   // Titulo
+            "Christopher Nolan",                // Diretor
+            2005,                       // Ano
+            new List<GeneroDTO>(),      // Generos vazio
+            5,                          // QuantidadeDisponivel
+            DateTime.UtcNow             // AdicionadoEm
+        );
 
         var mockService = new Mock<IFilmeService>();
 
@@ -148,14 +164,15 @@ public class FilmesControllerTests
             QuantidadeDisponivel = 10
         };
 
-        var filmeAtualizado = new FilmeResponseDto
-        {
-            Id = 1,
-            Titulo = dto.Titulo,
-            Diretor = dto.Diretor,
-            Ano = dto.Ano,
-            QuantidadeDisponivel = dto.QuantidadeDisponivel
-        };
+        var filmeAtualizado = new FilmeResponseDto(
+            1,                          // Id
+            "Matrix Reloaded",                   // Titulo
+            "Wachowski",                // Diretor
+            2003,                       // Ano
+            new List<GeneroDTO>(),      // Generos vazio
+            10,                         // QuantidadeDisponivel
+            DateTime.UtcNow             // AdicionadoEm
+        );
 
         var mockService = new Mock<IFilmeService>();
 
@@ -200,7 +217,7 @@ public class FilmesControllerTests
         var result = await controller.Update(1, dto);
 
         // Assert
-        Assert.IsType<NotFoundResult>(result);
+        Assert.IsType<NotFoundObjectResult>(result);
     }
 
     [Fact]
@@ -238,7 +255,7 @@ public class FilmesControllerTests
         var result = await controller.Delete(1);
 
         // Assert
-        Assert.IsType<NotFoundResult>(result);
+        Assert.IsType<NotFoundObjectResult>(result);
     }
 
     [Fact]
@@ -254,7 +271,7 @@ public class FilmesControllerTests
         var controller = new FilmesController(mockService.Object);
 
         // Act
-        await controller.GetAll();
+        await controller.GetAll(null, null, 1, 10);
 
         // Assert
         mockService.Verify(
