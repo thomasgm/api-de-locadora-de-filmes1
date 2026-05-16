@@ -3,7 +3,6 @@ using LocadoraFilmes.DTOs;
 using LocadoraFilmes.Services;
 using LocadoraFilmes.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.SqlServer.Server;
 
 namespace LocadoraFilmes.Tests.Services;
 
